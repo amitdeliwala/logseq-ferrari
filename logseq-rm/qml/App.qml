@@ -10,6 +10,14 @@ ApplicationWindow {
 
     PenHub { id: penHub }
     OCRWorker { id: ocrWorker }
+    Session { id: session }
+
+    Timer {
+        interval: 16
+        running: true
+        repeat: true
+        onTriggered: penHub.processBufferedEvents()
+    }
 
     Column {
         id: outline

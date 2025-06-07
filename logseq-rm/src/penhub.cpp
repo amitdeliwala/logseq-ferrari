@@ -11,7 +11,14 @@ PenHub::PenHub(QObject *parent)
 
 void PenHub::processBufferedEvents()
 {
-    // Placeholder for low-latency processing
+    for (auto it = active_.begin(); it != active_.end(); ++it) {
+        auto &s = it.value();
+        while (!s.pts.isEmpty()) {
+            QPointF p = s.pts.takeFirst();
+            float pressure = s.pressures.isEmpty() ? 1.f : s.pressures.takeFirst();
+            emit strokePoint(it.key(), p, pressure);
+        }
+    }
 }
 
 bool PenHub::eventFilter(QObject *obj, QEvent *event)
@@ -29,17 +36,28 @@ bool PenHub::eventFilter(QObject *obj, QEvent *event)
         auto it = active_.find(ev->pointerId());
         if (it != active_.end()) {
             it->pts.append(ev->posF());
-            emit strokePoint(ev->pointerId(), ev->posF(), ev->pressure());
+            it->pressures.append(ev->pressure());
         }
         break;
     }
     case QEvent::TabletRelease: {
         auto *ev = static_cast<QTabletEvent*>(event);
+        auto it = active_.find(ev->pointerId());
+        if (it != active_.end()) {
+            it->pts.append(ev->posF());
+            it->pressures.append(ev->pressure());
+        }
         active_.remove(ev->pointerId());
         emit strokeEnded(ev->pointerId());
         emit strokeActiveChanged();
-        lastReleasePos_ = ev->posF();
-        lastReleaseTimeMs_ = ev->timestamp();
+        if (ev->timestamp() - lastReleaseTimeMs_ < 300 &&
+            (ev->posF() - lastReleasePos_).manhattanLength() < 20) {
+            emit doubleTap(ev->posF());
+            lastReleaseTimeMs_ = 0;
+        } else {
+            lastReleasePos_ = ev->posF();
+            lastReleaseTimeMs_ = ev->timestamp();
+        }
         break;
     }
     default:
