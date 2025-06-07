@@ -16,7 +16,8 @@ Item {
             anchors.fill: parent
             visible: content.length === 0
             onStrokeEnded: {
-                // TODO embed PNG via Session
+                var img = ink.takeLastStrokeAsImage()
+                session.embedImage(uuid, img)
             }
         }
     }

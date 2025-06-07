@@ -28,7 +28,11 @@ protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
 
 private:
-    struct Stroke { QVector<QPointF> pts; QElapsedTimer timer; };
+    struct Stroke {
+        QVector<QPointF> pts;
+        QVector<float>    pressures;
+        QElapsedTimer     timer;
+    };
     QHash<int, Stroke> active_;
     QPointF lastReleasePos_;
     qint64  lastReleaseTimeMs_{0};
