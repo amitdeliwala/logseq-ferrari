@@ -1,0 +1,11 @@
+[Unit]
+After=xochitl.service
+
+[Service]
+Environment=QT_QPA_PLATFORM=epaper
+Environment=QT_QUICK_BACKEND=epaper
+ExecStart=/opt/logseq-rm/bin/logseq_rm
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

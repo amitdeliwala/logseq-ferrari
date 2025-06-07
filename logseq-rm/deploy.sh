@@ -1,20 +1,14 @@
-#!/bin/bash
-# deploy.sh (run from host)
-scp build/logseq-rm root@10.11.99.1:/opt/logseq-rm/
-scp build/logseq-cli root@10.11.99.1:/opt/logseq-rm/bin/
+#!/usr/bin/env bash
+set -e
+DEST=/opt/logseq-rm
 
-ssh root@10.11.99.1 <<'SERVICE'
-cat >/home/root/.config/systemd/user/logseq-rm.service <<UNIT
-[Unit]
-After=xochitl.service
-[Service]
-ExecStart=/opt/logseq-rm/logseq-rm
-Restart=on-failure
-Environment=QT_QPA_PLATFORM=epaper
-Environment=QT_QUICK_BACKEND=epaper
-[Install]
-WantedBy=default.target
-UNIT
+rsync -av --delete build/out/ root@10.11.99.1:${DEST}/
+scp package/logseq-rm.service root@10.11.99.1:/home/root/.
+
+ssh root@10.11.99.1 <<'EOFREMOTE'
+mkdir -p ~/.config/systemd/user
+mv ~/logseq-rm.service ~/.config/systemd/user/
 systemctl --user daemon-reload
 systemctl --user enable logseq-rm
-SERVICE
+systemctl --user restart logseq-rm
+EOFREMOTE
